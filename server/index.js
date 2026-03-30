@@ -25,6 +25,18 @@ app.use(express.urlencoded({ extended: true })); // for form data
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Vercel Serverless Function middleware MUST run before routes
+if (process.env.VERCEL === "1") {
+  app.use(async (req, res, next) => {
+    try {
+      await connectDB();
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+}
+
 app.use("/api/user/", UserRoutes);
 app.use("/api/tutorials/", TutorialRoutes);
 app.use("/api/blogs/", BlogRoutes);
@@ -48,6 +60,9 @@ app.get("/api", async (req, res) => {
 });
 
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
   mongoose.set("strictQuery", true);
   const mongoUrl = process.env.MONGODB_URL;
 
@@ -99,6 +114,8 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (process.env.VERCEL !== "1") {
+  startServer();
+}
 
 export default app;
