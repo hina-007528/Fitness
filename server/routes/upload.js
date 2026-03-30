@@ -7,8 +7,10 @@ import { BadRequestError } from '../error.js';
 
 const router = express.Router();
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'uploads');
+const uploadsDir = process.env.VERCEL === "1"
+  ? path.join('/tmp', 'uploads')
+  : path.join(process.cwd(), 'uploads');
+
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
