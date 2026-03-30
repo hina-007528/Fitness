@@ -1102,7 +1102,8 @@ const CommentSheet = ({ isOpen, onClose, item, type = 'blog', token, user, onCom
         formData.append('file', attachment.file);
 
         try {
-          const response = await fetch('http://localhost:8080/api/upload/single', {
+          const API_BASE = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/\/$/, '') : 'http://localhost:8080/api';
+          const response = await fetch(`${API_BASE}/upload/single`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -1114,7 +1115,7 @@ const CommentSheet = ({ isOpen, onClose, item, type = 'blog', token, user, onCom
             const result = await response.json();
             uploadedAttachments.push({
               type: attachment.type,
-              url: `http://localhost:8080${result.data.url}`,
+              url: result.data.url.startsWith('http') ? result.data.url : `${API_BASE.replace('/api', '')}${result.data.url}`,
               filename: result.data.filename,
               originalName: result.data.originalName,
               size: result.data.size,
@@ -1134,7 +1135,8 @@ const CommentSheet = ({ isOpen, onClose, item, type = 'blog', token, user, onCom
         formData.append('file', audioFile);
 
         try {
-          const response = await fetch('http://localhost:8080/api/upload/single', {
+          const API_BASE = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/\/$/, '') : 'http://localhost:8080/api';
+          const response = await fetch(`${API_BASE}/upload/single`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -1146,7 +1148,7 @@ const CommentSheet = ({ isOpen, onClose, item, type = 'blog', token, user, onCom
             const result = await response.json();
             uploadedAttachments.push({
               type: 'audio',
-              url: `http://localhost:8080${result.data.url}`,
+              url: result.data.url.startsWith('http') ? result.data.url : `${API_BASE.replace('/api', '')}${result.data.url}`,
               filename: result.data.filename,
               originalName: result.data.originalName,
               size: result.data.size,
