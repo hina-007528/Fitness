@@ -10,7 +10,8 @@ const uploadVideo = async (token, file) => {
   const formData = new FormData();
   formData.append('file', file);
   
-  const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/upload/single`, {
+  const apiBase = (process.env.REACT_APP_API_URL || 'http://localhost:8080/api').replace(/\/$/, '');
+  const response = await fetch(`${apiBase}/upload/single`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`
