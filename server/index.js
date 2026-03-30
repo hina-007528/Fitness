@@ -64,6 +64,10 @@ const connectDB = async () => {
     }
   }
 
+  if (process.env.VERCEL === "1") {
+    throw new Error("MONGODB_URL is required on Vercel. mongodb-memory-server is not supported in serverless functions.");
+  }
+
   const { MongoMemoryServer } = await import("mongodb-memory-server");
 
   const downloadDir = process.env.LOCALAPPDATA
@@ -83,8 +87,10 @@ const connectDB = async () => {
 const startServer = async () => {
   try {
     await connectDB();
-    const port = process.env.PORT ? Number(process.env.PORT) : 8080;
-    app.listen(port, () => console.log(`Server started on port ${port}`));
+    if (process.env.VERCEL !== "1") {
+      const port = process.env.PORT ? Number(process.env.PORT) : 8080;
+      app.listen(port, () => console.log(`Server started on port ${port}`));
+    }
   } catch (error) {
     console.error(error?.message || error);
     process.exit(1);
@@ -92,3 +98,5 @@ const startServer = async () => {
 };
 
 startServer();
+
+export default app;
