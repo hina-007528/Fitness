@@ -4,19 +4,39 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080/api/",
 });
 
-// Intercept all responses to globally map old broken image/video URLs 
-// so they correctly load from the Netlify public folder
+// Helper: extract just the filename from an old upload URL
+const extractFilename = (url) => {
+  // e.g. "http://localhost:8080/uploads/images/workout.jpg" => "/workout.jpg"
+  // e.g. "/uploads/videos/5319084.mp4" => "/5319084.mp4"
+  const match = url.match(/\/uploads\/(?:images|videos|files)?\/?([^"]+)/);
+  return match ? '/' + match[1] : url;
+};
+
+// Intercept all responses to globally map old broken image/video URLs
+// so they correctly load from the Netlify public folder (files are in root of /public)
 API.interceptors.response.use((response) => {
   if (response.data) {
     try {
       let dataStr = JSON.stringify(response.data);
-      if (dataStr.includes('localhost:8080') || dataStr.includes('vercel.app')) {
-        console.log("Found old URLs in database! Running Magic Interceptor...");
-      }
-      dataStr = dataStr
-        .replace(/http:\/\/localhost:8080\/uploads/g, '/uploads')
-        .replace(/https:\/\/fitness-nine-taupe\.vercel\.app\/api\/uploads/g, '/uploads')
-        .replace(/https:\/\/fitness-nine-taupe\.vercel\.app\/uploads/g, '/uploads');
+
+      // Replace full localhost URLs that have /uploads in them
+      dataStr = dataStr.replace(
+        /["']https?:\/\/localhost:\d+\/uploads\/(?:images|videos|files)?\/?([^"']+)["']/g,
+        (match, filename) => match[0] + '/' + filename + match[match.length - 1]
+      );
+
+      // Replace full Vercel URLs that have /uploads in them
+      dataStr = dataStr.replace(
+        /["']https?:\/\/fitness-nine-taupe\.vercel\.app\/(?:api\/)?uploads\/(?:images|videos|files)?\/?([^"']+)["']/g,
+        (match, filename) => match[0] + '/' + filename + match[match.length - 1]
+      );
+
+      // Also handle relative /uploads/images/... paths already in DB
+      dataStr = dataStr.replace(
+        /["']\/uploads\/(?:images|videos|files)?\/?([^"']+)["']/g,
+        (match, filename) => match[0] + '/' + filename + match[match.length - 1]
+      );
+
       response.data = JSON.parse(dataStr);
     } catch (e) {
       console.error("Interceptor failed:", e);
@@ -24,7 +44,7 @@ API.interceptors.response.use((response) => {
   }
   return response;
 }, (error) => {
-  console.error("API Call Failed:", error);
+  console.error("API Call Failed:", error.response?.data || error.message);
   return Promise.reject(error);
 });
 
