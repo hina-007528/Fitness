@@ -10,16 +10,22 @@ API.interceptors.response.use((response) => {
   if (response.data) {
     try {
       let dataStr = JSON.stringify(response.data);
+      if (dataStr.includes('localhost:8080') || dataStr.includes('vercel.app')) {
+        console.log("Found old URLs in database! Running Magic Interceptor...");
+      }
       dataStr = dataStr
         .replace(/http:\/\/localhost:8080\/uploads/g, '/uploads')
         .replace(/https:\/\/fitness-nine-taupe\.vercel\.app\/api\/uploads/g, '/uploads')
         .replace(/https:\/\/fitness-nine-taupe\.vercel\.app\/uploads/g, '/uploads');
       response.data = JSON.parse(dataStr);
     } catch (e) {
-      // ignore parse errors
+      console.error("Interceptor failed:", e);
     }
   }
   return response;
+}, (error) => {
+  console.error("API Call Failed:", error);
+  return Promise.reject(error);
 });
 
 export const UserSignUp = async (data) => API.post("/user/signup", data);
