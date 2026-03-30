@@ -4,6 +4,24 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080/api/",
 });
 
+// Intercept all responses to globally map old broken image/video URLs 
+// so they correctly load from the Netlify public folder
+API.interceptors.response.use((response) => {
+  if (response.data) {
+    try {
+      let dataStr = JSON.stringify(response.data);
+      dataStr = dataStr
+        .replace(/http:\/\/localhost:8080\/uploads/g, '/uploads')
+        .replace(/https:\/\/fitness-nine-taupe\.vercel\.app\/api\/uploads/g, '/uploads')
+        .replace(/https:\/\/fitness-nine-taupe\.vercel\.app\/uploads/g, '/uploads');
+      response.data = JSON.parse(dataStr);
+    } catch (e) {
+      // ignore parse errors
+    }
+  }
+  return response;
+});
+
 export const UserSignUp = async (data) => API.post("/user/signup", data);
 export const UserSignIn = async (data) => API.post("/user/signin", data);
 
