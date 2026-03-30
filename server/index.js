@@ -93,7 +93,9 @@ const startServer = async () => {
     }
   } catch (error) {
     console.error(error?.message || error);
-    process.exit(1);
+    if (process.env.VERCEL !== "1") {
+      process.exit(1);
+    }
   }
 };
 
